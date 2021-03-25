@@ -9,23 +9,52 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.chitra.service</groupId>
     <artifactId>service</artifactId>
-
-    <properties>
-        <java.version>8</java.version>
-    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.chitra.domain</groupId>
+            <groupId>com.chitra</groupId>
             <artifactId>domain</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.chitra.repository</groupId>
+            <groupId>com.chitra</groupId>
             <artifactId>repository</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.chitra</groupId>
+            <artifactId>config</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>5.3.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

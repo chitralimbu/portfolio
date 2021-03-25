@@ -1,10 +1,9 @@
 package com.chitra.service.media;
 
-import com.chitra.domain.media.Documents;
 import com.chitra.repository.media.DocumentRepository;
+import com.chitra.domain.media.Documents;
 import org.bson.BsonBinarySubType;
 import org.bson.types.Binary;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

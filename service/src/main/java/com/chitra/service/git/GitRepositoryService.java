@@ -1,18 +1,17 @@
 package com.chitra.service.git;
 
+import com.chitra.service.rest.RestService;
 import com.chitra.domain.git.GitRepository;
 import com.chitra.domain.git.GitRepositoryContents;
 import com.chitra.domain.git.GitRepositoryRecursive;
 import com.chitra.repository.git.GitRepositoryContentsRepository;
 import com.chitra.repository.git.GitRepositoryRecursiveRepository;
 import com.chitra.repository.git.GitRepositoryRepository;
-import com.chitra.service.rest.RestService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,12 +28,14 @@ public class GitRepositoryService {
 	private final GitRepositoryRepository gitRepo;
 	private final GitRepositoryRecursiveRepository gitRecursiveRepo;
 	private final GitRepositoryContentsRepository gitContentsRepo;
+	private final Gson gson;
 
-	public GitRepositoryService(GitRepositoryRepository gitRepo, GitRepositoryRecursiveRepository gitRecursiveRepo, GitRepositoryContentsRepository gitContentsRepo, RestService restService) {
+	public GitRepositoryService(GitRepositoryRepository gitRepo, GitRepositoryRecursiveRepository gitRecursiveRepo, GitRepositoryContentsRepository gitContentsRepo, RestService restService, Gson gson) {
 		this.gitRepo = gitRepo;
 		this.gitRecursiveRepo = gitRecursiveRepo;
 		this.gitContentsRepo = gitContentsRepo;
 		this.restService = restService;
+		this.gson = gson;
 	}
 
 	public String getContentsURL(String fullName) {
@@ -60,7 +61,7 @@ public class GitRepositoryService {
 		return jobj.get(element).toString();
 	}
 
-	private GitRepositoryRecursive returnRecursiveRaw(GitRepositoryRecursive gitRepositoryRecursive, String fullName, String parentOfTree, RestTemplate restTemplate) {
+	private GitRepositoryRecursive returnRecursiveRaw(GitRepositoryRecursive gitRepositoryRecursive, String fullName, String parentOfTree) {
 		log.info("Path of tree: " + parentOfTree);
 		gitRepositoryRecursive.setRaw(generateRawURL(fullName, String.format("%s/%s", parentOfTree, gitRepositoryRecursive.getPath())));
 		if(gitRepositoryRecursive.getCode() == null || gitRepositoryRecursive.getCode().equals("no code")) {
@@ -72,7 +73,7 @@ public class GitRepositoryService {
 		return gitRepositoryRecursive;
 	}
 
-	private List<GitRepositoryRecursive> generateRecursive(GitRepositoryContents gitContents, RestTemplate restTemplate, Gson gson){
+	private List<GitRepositoryRecursive> generateRecursive(GitRepositoryContents gitContents){
 		String getGitURL = String.format("%s?recursive=1", gitContents.getGit_url());
 		log.info("Get git URL: " + getGitURL);
 		//restTemplate.getForObject(), String.class);
@@ -84,22 +85,22 @@ public class GitRepositoryService {
 				.collect(Collectors.toList());
 	}
 
-	private List<GitRepositoryRecursive> addRawToGitRepositoryRecursive(List<GitRepositoryRecursive> gitReposRecursive, String fullName, String parentOfTree, RestTemplate restTemplate){
-		gitReposRecursive.forEach(obj -> returnRecursiveRaw(obj, fullName, parentOfTree, restTemplate));
+	private List<GitRepositoryRecursive> addRawToGitRepositoryRecursive(List<GitRepositoryRecursive> gitReposRecursive, String fullName, String parentOfTree){
+		gitReposRecursive.forEach(obj -> returnRecursiveRaw(obj, fullName, parentOfTree));
 		log.debug(String.format("Successfully generated raw from tree data %s", gitReposRecursive));
 		gitRecursiveRepo.saveAll(gitReposRecursive);
 		log.info("Successfully saved Tree to database");
 		return gitReposRecursive;
 	}
 
-	private List<GitRepositoryContents> generateFinalGitRepoContents(List<GitRepositoryContents> gitContents, GitRepository repository, RestTemplate restTemplate, Gson gson){
+	private List<GitRepositoryContents> generateFinalGitRepoContents(List<GitRepositoryContents> gitContents, GitRepository repository){
 		for(GitRepositoryContents gr : gitContents) {
 			if(gr.getType().equals("dir")) {
 				log.debug(String.format("Content %s is a directory", gr));
 				String fullName = repository.getFull_name();
 				String parentOfTree = gr.getPath();
 				//TODO
-				List<GitRepositoryRecursive> jobjRecursive = addRawToGitRepositoryRecursive(generateRecursive(gr, restTemplate, gson), fullName, parentOfTree, restTemplate);
+				List<GitRepositoryRecursive> jobjRecursive = addRawToGitRepositoryRecursive(generateRecursive(gr), fullName, parentOfTree);
 				gr.setRecursive(jobjRecursive);
 				gr.setIgnore(true);
 			}else if(gr.getType().equals("file")){
@@ -114,21 +115,21 @@ public class GitRepositoryService {
 		return gitContents;
 	}
 
-	public List<GitRepository> generateFinalGitRepository(RestTemplate restTemplate, Gson gson, List<GitRepository> allGitContents) {
+	public List<GitRepository> generateFinalGitRepository(List<GitRepository> allGitContents) {
 		for(GitRepository gitRepository: allGitContents) {
-			gitRepository = updateRepo(restTemplate, gson, gitRepository);
+			gitRepository = updateRepo(gitRepository);
 		}
 		return allGitContents;
 	}
 
-	private GitRepository updateRepo(RestTemplate restTemplate, Gson gson, GitRepository gitRepository) {
+	private GitRepository updateRepo(GitRepository gitRepository) {
 		/*String contents = restTemplate.getForObject(getContentsURL(gitRepository.getFull_name()), String.class);*/
 		String repositoryUrl = getContentsURL(gitRepository.getFull_name());
 		log.info(String.format("Requesting api from url: %s", repositoryUrl));
 		String contents = restService.gitExchange(repositoryUrl).getBody();
 		List<GitRepositoryContents> gitContents = gson.fromJson(contents, new TypeToken<List<GitRepositoryContents>>() {}.getType());
 		gitContents = gitContents.stream().filter(obj -> !stringContains(obj.getPath())).collect(Collectors.toList());
-		gitContents = generateFinalGitRepoContents(gitContents, gitRepository, restTemplate, gson);
+		gitContents = generateFinalGitRepoContents(gitContents, gitRepository);
 		gitRepository.setAllContents(gitContents);
 		gitRepo.save(gitRepository);
 		log.info(String.format("Successfully updated Repository %s", gitRepository.getName()));
@@ -136,7 +137,7 @@ public class GitRepositoryService {
 	}
 
 
-	public GitRepository updateRepository(String repository, RestTemplate restTemplate, Gson gson) {
+	public GitRepository updateRepository(String repository) {
 		log.info(String.format("Updating/adding repository %s/%s", username, repository));
 		/*String thisRepository = restTemplate.getForObject(GITHUB_REPOSITORY, String.class);*/
 		String thisRepository = restService.gitExchange(GITHUB_REPOSITORY).getBody();
@@ -145,15 +146,16 @@ public class GitRepositoryService {
 					.filter(repo -> repo.getName().contains(repository))
 					.findAny()
 					.orElseThrow(IllegalArgumentException::new);
-		return updateRepo(restTemplate, gson, toUpdate); 
+		return updateRepo(toUpdate);
 	}
 
 
-	public List<GitRepository> fullRefreshGitRepository(RestTemplate restTemplate, Gson gson){
+	public List<GitRepository> fullRefreshGitRepository(){
 		log.info("Refreshing all repositories");
-		String gitRepoContents = restTemplate.getForObject(GITHUB_REPOSITORY, String.class);
+		/*restTemplate.getForObject(GITHUB_REPOSITORY, String.class);*/
+		String gitRepoContents = restService.gitExchange(GITHUB_REPOSITORY).getBody();
 		List<GitRepository> allRepositories = gson.fromJson(gitRepoContents, new TypeToken<List<GitRepository>>() {}.getType()); 
-		return generateFinalGitRepository(restTemplate, gson, allRepositories);
+		return generateFinalGitRepository(allRepositories);
 	}
 
 }
