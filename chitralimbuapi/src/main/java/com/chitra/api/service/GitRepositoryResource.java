@@ -1,7 +1,7 @@
-package com.chitra.service;
+package com.chitra.api.service;
 
 
-import com.chitra.git.GitApiController;
+import com.chitra.api.git.GitApiController;
 import com.chitra.domain.git.GitRepository;
 import lombok.Getter;
 import org.springframework.hateoas.ResourceSupport;

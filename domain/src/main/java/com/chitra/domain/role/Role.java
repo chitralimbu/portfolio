@@ -1,5 +1,6 @@
 package com.chitra.domain.role;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,12 @@ public class Role {
 	
 	@Id
 	private String _id;
+
 	@Indexed(unique = true, direction = IndexDirection.DESCENDING)
-	
 	private String role;
+
+	public Role(String role) {
+		this.role = role;
+	}
+
 }

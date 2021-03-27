@@ -1,0 +1,28 @@
+spring:
+  profiles:
+    active:
+      - development
+---
+spring:
+  profiles: development
+  data:
+    mongodb:
+      host: 192.168.0.88
+      port: 27017
+      database: ChitraLimbu
+    rest:
+      base-path: /api
+      detection-strategy: annotated
+
+---
+
+management:
+  endpoints:
+    web:
+      base-path: /management
+      exposure:
+        include: '*'
+  #        exclude: threaddump,heapdump
+  endpoint:
+    health:
+      show-details: always

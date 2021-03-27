@@ -1,4 +1,4 @@
-package com.chitra.service;
+package com.chitra.api.service;
 
 import com.chitra.domain.git.GitRepository;
 import org.springframework.stereotype.Service;
