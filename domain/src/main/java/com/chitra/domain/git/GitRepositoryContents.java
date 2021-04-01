@@ -16,6 +16,7 @@ import java.util.List;
 @Document(collection="gitrepositorycontents")
 public class GitRepositoryContents {
 	@Id
+	private String id;
 	@NonNull
 	private String sha;
 	@NonNull

@@ -4,7 +4,6 @@ package com.chitra.api.git;
 import com.chitra.domain.git.GitRepository;
 import com.chitra.repository.git.GitRepositoryRepository;
 import com.chitra.service.git.GitRepositoryService;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,50 +1,46 @@
 package com.chitra.repository;
 
 import com.chitra.TestMain;
+import com.chitra.domain.role.Role;
 import com.chitra.domain.user.User;
+import com.chitra.repository.role.RoleRepository;
 import com.chitra.repository.user.UserRepository;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.assertTrue;
+import javax.ws.rs.NotFoundException;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
-@RunWith(SpringRunner.class)
+@Slf4j
 @SpringBootTest(classes = TestMain.class)
 public class UserRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
-    private User user;
 
-    @Before
-    public void setUp(){
-        user = User.builder()
-                .username("test")
-                .accountExpired(false)
-                .accountNonLocked(false)
-                .roles(null)
-                .credentialsNonExpired(false)
-                .password("Password")
-                .enabled(true)
-                .build();
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Test
+    public void findUserContaining(){
+        List<User> allUser = userRepository.findByUsernameContaining(TestMain.EPOCH).orElseThrow(() -> new UsernameNotFoundException("None found"));
+        log.info("All users: " + allUser);
+        assertEquals(2, allUser.size());
+        allUser.forEach(user -> assertNotNull(user.getRoles()));
     }
 
     @Test
-    public void testUserSaveAndLoad(){
-        userRepository.save(user);
-        User loaded = userRepository.findByUsername("test").orElseThrow(() -> new UsernameNotFoundException("Username not found"));
-        assertTrue(loaded instanceof User);
-    }
-
-    @After
-    public void cleanUp(){
-        userRepository.deleteAll();
+    public void findUserByRole(){
+        Role admin = roleRepository.findByRole("ROLE_ADMIN");
+        List<User> users = userRepository.findAllByRolesId(admin.getId()).orElseThrow(() -> new NotFoundException("User with ROLE_ADMIN not round"));
+        log.info("Users: " + users);
+        assertEquals(1, users.size());
     }
 }

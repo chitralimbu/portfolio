@@ -26,9 +26,7 @@ public class GitRepository {
 	private String html_url;
 	@NonNull
 	private String description;
-	
 	private boolean igonre = false;
-
 	@DBRef
 	private List<GitRepositoryContents> allContents;
 }

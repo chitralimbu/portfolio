@@ -2,18 +2,19 @@ package com.chitra.domain.user;
 
 import com.chitra.domain.role.Role;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.Collection;
 import java.util.Set;
 
@@ -22,12 +23,13 @@ import java.util.Set;
 @Document(collection = "user")
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties({"password"})
+@JsonIgnoreProperties({"authorities"})
 public class User implements UserDetails, CredentialsContainer {
 
     @Id
     private String id;
     private String username;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private boolean accountExpired;
     private boolean accountNonLocked;
@@ -35,7 +37,9 @@ public class User implements UserDetails, CredentialsContainer {
     private boolean enabled;
     @Transient
     private Set<GrantedAuthority> authorities;
+
     @DBRef
+    @RestResource(exported = false)
     private Set<Role> roles;
 
     public User(String username, String password, boolean accountExpired, boolean accountNonLocked, boolean credentialsNonExpired, boolean enabled, Set<Role> roles) {

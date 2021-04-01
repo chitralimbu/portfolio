@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GitRepositoryService {
 
-	private List<String> ignoreList = Arrays.asList("favicon.ico","maven-wrapper.properties","MavenWrapperDownloader.java","pom.properties", ".adoc","gradle","MANIFEST.MF",".pyc",".mxl", ".DS_Store",".jpg", ".jpeg", ".png",".war", ".jar",".mvn/wrapper",".gitignore","mvnw","mvnw.cmd","docx",".classpath",".project",".settings","bin",".class",".mp3",".project");
+	private final List<String> ignoreList = Arrays.asList("favicon.ico","maven-wrapper.properties","MavenWrapperDownloader.java","pom.properties", ".adoc","gradle","MANIFEST.MF",".pyc",".mxl", ".DS_Store",".jpg", ".jpeg", ".png",".war", ".jar",".mvn/wrapper",".gitignore","mvnw","mvnw.cmd","docx",".classpath",".project",".settings","bin",".class",".mp3",".project");
 	private static final String username="chitralimbu";
 	private static final String GITHUB_REPOSITORY="https://api.github.com/users/chitralimbu/repos";
 	private final RestService restService;
@@ -66,7 +66,6 @@ public class GitRepositoryService {
 		gitRepositoryRecursive.setRaw(generateRawURL(fullName, String.format("%s/%s", parentOfTree, gitRepositoryRecursive.getPath())));
 		if(gitRepositoryRecursive.getCode() == null || gitRepositoryRecursive.getCode().equals("no code")) {
 			log.info(String.format("Code for path %s is empty adding code if available", gitRepositoryRecursive.getPath()));
-			String raw = gitRepositoryRecursive.getRaw();
 			//restTemplate.getForObject(gitRepositoryRecursive.getRaw(), String.class)
 			gitRepositoryRecursive.setCode(restService.gitExchange(gitRepositoryRecursive.getRaw()).getBody());
 		}
@@ -117,17 +116,17 @@ public class GitRepositoryService {
 
 	public List<GitRepository> generateFinalGitRepository(List<GitRepository> allGitContents) {
 		for(GitRepository gitRepository: allGitContents) {
-			gitRepository = updateRepo(gitRepository);
+			updateRepo(gitRepository);
 		}
 		return allGitContents;
 	}
 
 	private GitRepository updateRepo(GitRepository gitRepository) {
-		/*String contents = restTemplate.getForObject(getContentsURL(gitRepository.getFull_name()), String.class);*/
 		String repositoryUrl = getContentsURL(gitRepository.getFull_name());
 		log.info(String.format("Requesting api from url: %s", repositoryUrl));
 		String contents = restService.gitExchange(repositoryUrl).getBody();
 		List<GitRepositoryContents> gitContents = gson.fromJson(contents, new TypeToken<List<GitRepositoryContents>>() {}.getType());
+		assert gitContents != null;
 		gitContents = gitContents.stream().filter(obj -> !stringContains(obj.getPath())).collect(Collectors.toList());
 		gitContents = generateFinalGitRepoContents(gitContents, gitRepository);
 		gitRepository.setAllContents(gitContents);
@@ -152,7 +151,6 @@ public class GitRepositoryService {
 
 	public List<GitRepository> fullRefreshGitRepository(){
 		log.info("Refreshing all repositories");
-		/*restTemplate.getForObject(GITHUB_REPOSITORY, String.class);*/
 		String gitRepoContents = restService.gitExchange(GITHUB_REPOSITORY).getBody();
 		List<GitRepository> allRepositories = gson.fromJson(gitRepoContents, new TypeToken<List<GitRepository>>() {}.getType()); 
 		return generateFinalGitRepository(allRepositories);

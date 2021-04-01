@@ -12,11 +12,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 @Document(collection="gitrepositoryrecursive")
 public class GitRepositoryRecursive {
+	@Id
+	private String id;
 	@NonNull
 	private String path;
 	@NonNull
 	private String type;
-	@Id
 	@NonNull
 	private String sha;
 	@NonNull
