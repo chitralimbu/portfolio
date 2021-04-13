@@ -23,17 +23,19 @@ public class CleanUp {
     }
 
     public void deleteRepo(GitRepository repo){
-        repo.getAllContents().forEach(content -> {
-            if(content.getRecursive() != null){
-                content.getRecursive().forEach(recursive -> {
-                    //delete all recursive
-                    gitRecursiveRepository.delete(recursive);
-                });
-            }
-            //delete all contents
-            gitContentsRepository.delete(content);
-        });
-        //delete all repository
-        gitRepository.delete(repo);
+        if(repo != null && repo.getAllContents() != null){
+            repo.getAllContents().forEach(content -> {
+                if(content.getRecursive() != null){
+                    content.getRecursive().forEach(recursive -> {
+                        //delete all recursive
+                        gitRecursiveRepository.delete(recursive);
+                    });
+                }
+                //delete all contents
+                gitContentsRepository.delete(content);
+            });
+            //delete all repository
+            gitRepository.delete(repo);
+        }
     }
 }

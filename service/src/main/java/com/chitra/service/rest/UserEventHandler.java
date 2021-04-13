@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,9 @@ public class UserEventHandler {
 
     @HandleBeforeCreate
     public void handleUserCreate(User user){
+        if(checkUserExists(user)){
+            throw new IllegalArgumentException(String.format("Username %s: already exists", user.getUsername()));
+        }
         Set<Role> roles;
         if(user.getRoles() == null || user.getRoles().isEmpty()){
             log.debug("Role does not exist for new requested user: " + user.getUsername() + " giving ROLE_USER");
@@ -55,6 +59,11 @@ public class UserEventHandler {
             log.info("Password is not the same: updating password");
             user.setPassword(encoder.encode(userPassword));
         }
+    }
+
+    private boolean checkUserExists(User user){
+        Optional<User> checkUser = userRepository.findByUsername(user.getUsername());
+        return checkUser.isPresent() ? true : false;
     }
 
     private Set<Role> getRoles(User user) {

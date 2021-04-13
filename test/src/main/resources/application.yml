@@ -11,7 +11,7 @@ spring:
   profiles: testing
   data:
     mongodb:
-      host: 192.168.0.88
+      host: localhost
       port: 27017
       database: ChitraLimbuTest
     rest:

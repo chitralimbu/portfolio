@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ public class UserActionService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder encoder;
 
+    //TODO = need to delete
     public UserActionService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder encoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -28,6 +30,10 @@ public class UserActionService {
     }
 
     public void addNewUser(User user) {
+        log.info("Adding new user: " + user.getUsername());
+        if(checkUsernameExists(user)){
+            throw new IllegalArgumentException(String.format("Username %s already exists", user.getUsername()));
+        }
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
             log.info(String.format("New user %s has no roles defined adding default ROLE_USER", user.getUsername()));
             Set<Role> allRoles = new HashSet<>();
@@ -40,6 +46,11 @@ public class UserActionService {
         }
         user.setPassword(encoder.encode(user.getPassword()));
         userRepository.save(user);
+    }
+
+    private boolean checkUsernameExists(User user){
+        Optional<User> findUser = userRepository.findByUsername(user.getUsername());
+        return findUser.isPresent() ? true : false;
     }
 
     //TODO
